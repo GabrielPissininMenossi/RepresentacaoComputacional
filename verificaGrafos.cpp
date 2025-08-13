@@ -78,7 +78,7 @@ int manuAdjacencia(){
 int main(){
     //o grafo será representado pela matriz de adjacência
     int grafo[LINHA][COLUNA] = {}, TLLin, TLCol;
-    
+    printf("Ola mundo!!\n");
 
     return 0;
 }
