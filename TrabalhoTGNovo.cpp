@@ -65,11 +65,13 @@ void lerTxTMatrizAdjacencia(int m[L][C], int *qtdeVertices, int *qtdeLinhas, int
 	
 	fclose(Ptr);
 }
+
 void verificarOrientadoAdjacencia(int m[L][C], int l, int c,int *grafo)
 {
-	for (int i = 0; i < L; i++)
+	
+	for (int i = 0; i < l; i++)
 	{
-		for (int j = 0; j < C; j++)
+		for (int j = 0; j < c; j++)
 		{
 			if (m[i][j] != m[j][i]) // orientado (nao simetrico)
 				*grafo = 1;
@@ -131,24 +133,26 @@ void verificarCompletoAdjacencia(int m[L][C], int l, int c, int *completo, int v
 	}
 	
 }
-void exibirVerticesAdjacencia(char vertices[C])
+
+void exibirMatrizAdjacenciaComVertices(int m[L][C], char vertices[C], int qtdeLinhas, int qtdeColunas)
 {
-	for(int i = 0; i < strlen(vertices); i++)
-		printf("%c ", vertices[i]);
-	
-}
-void exibirMatrizAdjacencia(int m[L][C], int qtdeLinhas, int qtdeColunas)
-{
-	for (int i = 0; i < qtdeLinhas; i++)
+    printf("MA "); 
+    for (int j = 0; j < qtdeColunas; j++)
 	{
-		for (int j = 0; j < qtdeColunas; j++)
+        printf("%c ", vertices[j]);
+    }
+    printf("\n");
+    for (int i = 0; i < qtdeLinhas; i++)
+	{
+        printf("%c ", vertices[i]);
+        for (int j = 0; j < qtdeColunas; j++)
 		{
-			printf ("%d ", m[i][j]);
-		}
-		printf("\n");
-	}
-	
+            printf("%d ", m[i][j]);
+        }
+        printf("\n");
+    }
 }
+
 char menu (void)
 {
 	printf("\n[A] - Matriz de Adjacencia\n");
@@ -186,9 +190,7 @@ void executar(void)
 				do
 				{
 					clrscr();
-					exibirVerticesAdjacencia(vertices);
-					printf("\n");
-					exibirMatrizAdjacencia(m, qtdeLinhas,qtdeColunas);
+					exibirMatrizAdjacenciaComVertices(m, vertices,qtdeLinhas,qtdeColunas);
 					verificarOrientadoAdjacencia(m, qtdeLinhas, qtdeColunas ,&grafo);
 					if (grafo == 1)
 						printf ("\nGrafo Orientado (Digrafo)\n");
