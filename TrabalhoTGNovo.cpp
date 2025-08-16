@@ -65,7 +65,91 @@ void lerTxTMatrizAdjacencia(int m[L][C], int *qtdeVertices, int *qtdeLinhas, int
 	
 	fclose(Ptr);
 }
+void lerTxTMatrizIncidencia(int m[L][C], int *qtdeVertices, int *qtdeArestas, int *qtdeLinhas, int *qtdeColunas, char vertices[C], char arestas[C])
+{
 
+	int j = 0, num, linhas = 0, colunas = 0;
+	char linha[50], aux[50];
+	FILE * Ptr = fopen("entradaMI.txt", "r");
+	rewind(Ptr); // joga o ponteiro para o inicio
+	fgets(linha, sizeof(linha), Ptr); // le a primeira linha, contendo todos meus vertices
+	for (int i = 0; i < strlen(linha);i++)
+	{
+		if (linha[i] != ' ' && linha[i] != '\n')
+		{
+			vertices[j] = linha[i];
+			*qtdeVertices = *qtdeVertices + 1;
+			j++;
+		}
+		//printf("%c", linha[i]);
+	}
+	// ler as arestas
+	j = 0;
+	fgets(linha, sizeof(linha), Ptr);
+	for(int i = 0; i < strlen(linha);i++)
+	{
+		
+		if (linha[i] != ' ' && linha[i] != '\0')
+		{
+			aux[j] = linha[i];
+			j++;
+		}
+		else
+		{
+			aux[j] = ' ';
+			j++;
+			aux[j] = '\0';
+			strcat(arestas, aux);
+			*qtdeArestas = *qtdeArestas + 1;
+			j = 0;
+		}
+		//printf("%c", linha[i]);
+	}
+	if (j > 0)
+	{
+		
+		aux[j] = '\0';
+		strcat(arestas, aux);
+		*qtdeArestas = *qtdeArestas + 1;
+
+	}
+	while(fgets(linha, sizeof(linha), Ptr))
+	{
+		j = 0;
+		colunas = 0;
+		for(int i = 0; i < strlen(linha); i++)
+		{
+			if(linha[i] != ' ' && linha[i] != '\n')
+			{
+				aux[j] = linha[i];
+				j++;
+			}
+			else
+			{
+				aux[j] = '\0';
+				num = atoi(aux);
+				m[linhas][colunas] = num;
+				j = 0;
+				colunas++;
+			}
+		
+			
+		}
+		if (j > 0)
+		{
+			
+			aux[j] = '\0';
+			num = atoi(aux);
+			m[linhas][colunas] = num;
+
+		}
+		if (colunas > *qtdeColunas)
+			*qtdeColunas = colunas;
+		linhas++;
+	}
+	*qtdeLinhas = linhas;
+	fclose(Ptr);
+}
 void verificarOrientadoAdjacencia(int m[L][C], int l, int c,int *grafo)
 {
 	
@@ -81,6 +165,20 @@ void verificarOrientadoAdjacencia(int m[L][C], int l, int c,int *grafo)
 	}
 	
 }
+void verificarOrientadoIncidencia(int m[L][C], int l, int c, int *grafo)
+{
+
+	for (int i = 0; i < l; i++) // vertices
+	{
+		for(int j = 0; j < c; j++) // arestas
+		{
+			if (m[i][j] < 0) // digrafo
+				*grafo = 1;
+			
+		}
+	}
+	
+}
 void verificaSimplesAdjacencia(int m[L][C],int l, int c, int *simples)
 {
 	for (int i = 0; i < l; i++)
@@ -92,6 +190,48 @@ void verificaSimplesAdjacencia(int m[L][C],int l, int c, int *simples)
 		}
 	}
 	
+}
+void verificaSimplesIncidenciaGrafo(int m[L][C], int l, int c, int *multi, int *laco)
+{
+	int cont, linha1, linha2;
+	for(int j = 0; j < c; j++)
+	{
+		cont = 0;
+		for(int i = 0; i < l; i++)
+		{
+			if(m[i][j] != 0) 
+			{
+				cont++;
+				if (cont == 1)
+					linha1 = i;
+				if (cont == 2)
+					linha2 = i;
+			}
+		
+		}
+		if (cont == 2)
+		{
+			for(int k=j+1; k < c; k++)
+			{
+				if (m[linha1][k] != 0 && m[linha2][k] != 0) // multiplas arestas
+					*multi = 1;
+						
+			}
+			
+		}
+	}
+	for (int j = 0; j < c; j++)
+	{
+		cont = 0;
+		for (int i = 0; i < l; i++)
+		{
+			
+			if(m[i][j] != 0) 
+				cont++;
+		}
+		if (cont == 1)
+			*laco = 1;
+	}
 }
 void verificarRegularAdjacencia(int m[L][C], int l, int c,int *regular)
 {
@@ -152,6 +292,37 @@ void exibirMatrizAdjacenciaComVertices(int m[L][C], char vertices[C], int qtdeLi
         printf("\n");
     }
 }
+void exibirMatrizIncidenciaComVertices(int m[L][C], char vertices[C], char arestas[C], int qtdeLinhas, int qtdeColunas, int qtdeArestas)
+{
+    char aux[50];
+    int pos = 0;
+
+    printf("MI  ");
+
+    for (int k = 0; k < qtdeArestas; k++)
+    {
+        int j = 0;
+        while (arestas[pos] != ' ' && arestas[pos] != '\0')
+		{
+            aux[j++] = arestas[pos++];
+        }
+        aux[j] = '\0';
+        pos++; 
+
+        printf("%s ", aux);
+    }
+    printf("\n");
+
+    for (int i = 0; i < qtdeLinhas; i++)
+    {
+        printf("%c  ", vertices[i]);
+        for (int j = 0; j < qtdeColunas; j++)
+        {
+            printf("%d  ", m[i][j]);
+        }
+        printf("\n");
+    }
+}
 
 char menu (void)
 {
@@ -177,10 +348,10 @@ void executar(void)
 	do
 	{	
 		
-		int grafo = 0, simples = 0, regular = 0, completo;
-		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0;
-		char vertices[C];
-
+		int grafo = 0, simples = 0, regular = 0, completo = 0, laco = 0, multi = 0;
+		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0, qtdeArestas = 0;
+		char vertices[C], arestas[C];
+		arestas[0] = '\0';
 		clrscr();
 		op = menu();
 		switch(op)
@@ -237,13 +408,32 @@ void executar(void)
 				}while(op2 != 27);
 			break;
 			case 'B':
+				lerTxTMatrizIncidencia(m, &qtdeVertices, &qtdeArestas, &qtdeLinhas, &qtdeColunas, vertices, arestas);
 				do
-				{	clrscr();
+				{	
+					clrscr();
+					exibirMatrizIncidenciaComVertices(m, vertices,arestas,qtdeLinhas,qtdeColunas, qtdeArestas);
+					verificarOrientadoIncidencia(m, qtdeLinhas, qtdeColunas ,&grafo);
+					if (grafo == 1)
+						printf ("\nGrafo Orientado (Digrafo)\n");
+					else
+						printf ("\nGrafo Nao Orientado (Grafo)\n");
 					op2 = submenu();
 					switch(op2)
 					{
 						case 'A':
-						printf("grafo orientado incidencia\n");
+						if (grafo == 1) // digrafo
+						{
+							printf("nao feito");
+						}
+						else
+						{
+							verificaSimplesIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, &multi, &laco);
+						}
+						if (multi == 1 || laco == 1)
+							printf("\nNao eh simples");
+						else
+							printf("\nEh simples");
 						getch();
 						break;
 					}
