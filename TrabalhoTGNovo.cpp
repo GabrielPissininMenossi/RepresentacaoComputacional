@@ -233,6 +233,28 @@ void verificaSimplesIncidenciaGrafo(int m[L][C], int l, int c, int *multi, int *
 			*laco = 1;
 	}
 }
+
+void verificaRegularIncidenciaGrafo(int m[L][C], int l, int c, int *regular, int *grau)
+{
+	int aux = 0;
+	for (int i = 0; i < l; i++)
+	{
+		*grau = 0;
+		for (int j = 0; j < c; j++)
+		{
+			if (m[i][j] != 0)
+				*grau = *grau + 1;
+				
+		}
+		if (aux == 0) // primeira linha
+			aux = *grau;
+		else
+		if (*grau != aux)
+			*regular = 1; // nao é regular
+	}
+	
+	
+}
 void verificarRegularAdjacencia(int m[L][C], int l, int c,int *regular)
 {
 	int cont, aux = 0;
@@ -265,15 +287,40 @@ void verificarCompletoAdjacencia(int m[L][C], int l, int c, int *completo, int v
 		cont = 0;
 		for (int j = 0; j < c; j++)
 		{
-			cont++;
-			
+			if (m[i][j] != 0)
+				cont++;
 		}
 		if (cont != v - 1) 
 			*completo = 1;
 	}
 	
 }
+void verificaCompletoIncidenciaGrafo(int m[L][C], int l, int c, int qtdeArestas, int qtdeVertices, int *completo, int *n)
+{
+	//printf ("Qtde Arestas: %d\n", qtdeArestas);
+	//printf ("Qtde Vertices: %d\n", qtdeVertices);
+	*n = qtdeVertices*(qtdeVertices-1)/2;
+	if (qtdeArestas != *n)
+		*completo = 1; // nao é completo
+	else
+	{
+		int grau;
+		for (int i = 0; i < l; i++)
+		{
+			grau = 0;
+			for (int j = 0; j < c; j++)
+			{
+				if(m[i][j] != 0)
+					grau++;
+				
+			}
+			if (grau != qtdeVertices - 1)
+				*completo = 1; // nao é completo
+		}
+		
+	}
 
+}
 void exibirMatrizAdjacenciaComVertices(int m[L][C], char vertices[C], int qtdeLinhas, int qtdeColunas)
 {
     printf("MA "); 
@@ -348,7 +395,7 @@ void executar(void)
 	do
 	{	
 		
-		int grafo = 0, simples = 0, regular = 0, completo = 0, laco = 0, multi = 0;
+		int grafo = 0, simples = 0, regular = 0, completo = 0, laco = 0, multi = 0, grau = 0, n;
 		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0, qtdeArestas = 0;
 		char vertices[C], arestas[C];
 		arestas[0] = '\0';
@@ -423,17 +470,55 @@ void executar(void)
 					{
 						case 'A':
 						if (grafo == 1) // digrafo
-						{
 							printf("nao feito");
-						}
 						else
-						{
 							verificaSimplesIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, &multi, &laco);
-						}
-						if (multi == 1 || laco == 1)
-							printf("\nNao eh simples");
+						if (multi == 1 && laco == 1)
+							printf("\nNao eh simples\n\nHa multiplas arestas e laco");
+						else
+						if (multi == 1)
+							printf ("\nNao eh simples\n\nHa multiplas arestas");
+						else
+						if (laco == 1)
+							printf ("\nNao eh simples\n\nHa laco");
 						else
 							printf("\nEh simples");
+						getch();
+						break;
+						case 'B':
+						if(grafo == 1)
+							printf ("nao feito");	
+						else
+							verificaRegularIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, &regular, &grau);
+						if (regular == 1) // nao é regular
+							printf ("\nNao Regular\n");
+						else
+						{
+							printf ("\nRegular\n");
+							printf ("Grau: %d\n", grau);
+						}
+						getch();
+						break;
+						case 'C':
+						if (regular == 0 && simples == 0) // tem q ser regular e simples, para ser completo
+						{
+							if (grafo == 1) // digrafo
+								printf ("nao feito");
+							else
+								verificaCompletoIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, qtdeArestas, qtdeVertices,&completo, &n);
+							if (completo == 1)
+							{
+								printf ("\nNao eh completo\n");
+								if (n != qtdeArestas)
+									printf ("\nNao houve o numero esperado de arestas\nTotal: %d\nEsperado: %d", qtdeArestas, n);
+								else
+									printf ("\nNem todas as vertices possuem o grau de n-1");
+							}
+							else
+								printf ("\nCompleto");
+						}
+						else
+							printf ("\nNao eh completo\n");
 						getch();
 						break;
 					}
