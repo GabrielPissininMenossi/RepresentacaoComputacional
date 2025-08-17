@@ -233,7 +233,46 @@ void verificaSimplesIncidenciaGrafo(int m[L][C], int l, int c, int *multi, int *
 			*laco = 1;
 	}
 }
-
+void verificarSimplesIncidenciaDigrafo(int m[L][C], int l, int c, int *multi)
+{
+	int par[2], cont, linha1, linha2; 
+	for (int j = 0; j < c; j++) // pra cada coluna, preciso ver se ha o mesmo par(origem, destino)
+	{
+		cont = 0;
+		for(int i = 0; i < l; i++)
+		{
+			if (m[i][j] != 0)
+			{
+				cont++;
+				if (cont == 1)
+				{
+					par[0] = m[i][j];
+					linha1 = i;
+				}
+				else
+				if (cont == 2)
+				{
+					par[1] = m[i][j];
+					linha2 = i;
+				}
+			}
+		}
+		if (cont == 2)
+		{
+			for(int k = j+1; k < c; k++)
+			{
+				
+				if((m[linha1][k] < 0 && par[0] < 0 || m[linha1][k] > 0 && par[0] > 0)  && (m[linha2][k] > 0 && par[1] > 0 || m[linha2][k] < 0 && par[1] < 0))
+					*multi = 1;
+				
+			}
+			 	
+		}
+		
+		
+	}
+		
+}
 void verificaRegularIncidenciaGrafo(int m[L][C], int l, int c, int *regular, int *grau)
 {
 	int aux = 0;
@@ -253,6 +292,55 @@ void verificaRegularIncidenciaGrafo(int m[L][C], int l, int c, int *regular, int
 			*regular = 1; // nao é regular
 	}
 	
+	
+}
+void verificarRegularIncidenciaDigrafo(int m[L][C], int l, int c, int *regular, int *regularEmissao, int *regularRecepcao,  int *grau,char vertices[C])
+{
+	int contE, contR, total, grauE = -1, grauR = -1, grauTotal = -1;
+	for (int i = 0; i < l; i++)
+	{
+		contE = 0;
+		contR = 0;
+		total = 0;
+		printf ("\nVertice: %c\n", vertices[i]);
+		for(int j = 0; j < c; j++)
+		{
+			if (m[i][j] > 0) // recpeção
+				contR++;
+			else
+			if(m[i][j] < 0)
+				contE++;	
+			
+		}
+		if (grauE == -1) // definir o grau
+			grauE = contE;
+		else
+		if (contE != grauE) // nao regular por emissao
+			*regularEmissao = 1;
+		
+		if (grauR == -1)
+			grauR = contR;
+		else
+		if (contR != grauR)
+			*regularRecepcao = 1;
+			
+		total = contE + contR;
+		if (grauTotal == -1)
+			grauTotal = total;
+		else
+		if(total != grauTotal)
+			*regular = 1;
+		
+		printf ("Grau de Emissao: %d\n", contE);
+		printf ("Grau de Recepcao: %d\n", contR);
+		printf ("Grau Total: %d\n", total);
+		if (contE == 0 && contR != 0)
+			printf ("Sumidouro");
+		else
+		if(contR == 0 && contE != 0)
+			printf ("Fonte");
+		*grau = grauTotal;
+	}	
 	
 }
 void verificarRegularAdjacencia(int m[L][C], int l, int c,int *regular)
@@ -320,6 +408,13 @@ void verificaCompletoIncidenciaGrafo(int m[L][C], int l, int c, int qtdeArestas,
 		
 	}
 
+}
+void verificarCompletoIncidenciaDigrafo(int m[L][C], int l, int c, int qtdeArestas,int qtdeVertices,int *completo, int *n)
+{
+	*n = qtdeVertices * (qtdeVertices - 1); // qtde esperada de arestas
+	if (qtdeArestas != *n)
+		*completo = 1;
+		
 }
 void exibirMatrizAdjacenciaComVertices(int m[L][C], char vertices[C], int qtdeLinhas, int qtdeColunas)
 {
@@ -395,7 +490,7 @@ void executar(void)
 	do
 	{	
 		
-		int grafo = 0, simples = 0, regular = 0, completo = 0, laco = 0, multi = 0, grau = 0, n;
+		int grafo = 0, simples = 0, regular = 0, regularEmissao = 0, regularRecepcao = 0, completo = 0, laco = 0, multi = 0, grau = 0, n;
 		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0, qtdeArestas = 0;
 		char vertices[C], arestas[C];
 		arestas[0] = '\0';
@@ -470,7 +565,7 @@ void executar(void)
 					{
 						case 'A':
 						if (grafo == 1) // digrafo
-							printf("nao feito");
+							verificarSimplesIncidenciaDigrafo(m, qtdeLinhas, qtdeColunas, &multi);
 						else
 							verificaSimplesIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, &multi, &laco);
 						if (multi == 1 && laco == 1)
@@ -487,14 +582,14 @@ void executar(void)
 						break;
 						case 'B':
 						if(grafo == 1)
-							printf ("nao feito");	
+							verificarRegularIncidenciaDigrafo(m, qtdeLinhas, qtdeColunas, &regular, &regularEmissao, &regularRecepcao, &grau,vertices);
 						else
 							verificaRegularIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, &regular, &grau);
 						if (regular == 1) // nao é regular
 							printf ("\nNao Regular\n");
 						else
 						{
-							printf ("\nRegular\n");
+							printf ("\n\nRegular\n");
 							printf ("Grau: %d\n", grau);
 						}
 						getch();
@@ -503,7 +598,7 @@ void executar(void)
 						if (regular == 0 && simples == 0) // tem q ser regular e simples, para ser completo
 						{
 							if (grafo == 1) // digrafo
-								printf ("nao feito");
+								verificarCompletoIncidenciaDigrafo(m, qtdeLinhas, qtdeColunas, qtdeArestas, qtdeVertices, &completo, &n);
 							else
 								verificaCompletoIncidenciaGrafo(m, qtdeLinhas, qtdeColunas, qtdeArestas, qtdeVertices,&completo, &n);
 							if (completo == 1)
