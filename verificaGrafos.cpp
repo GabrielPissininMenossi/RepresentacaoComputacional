@@ -11,16 +11,17 @@ typedef struct listaAdjacencia
 {
     char vertice;
     int peso;
-    struct listaAdjacencia *prox;
+    struct listaAdjacencia *head, *tail;
 } ListaAdjacencia;
 
 // pequeno tad da lista adjacencia
-ListaAdjacencia *novaCaixaLista()
+ListaAdjacencia *novaCaixaLista(void)
 {
     ListaAdjacencia *nova = (ListaAdjacencia *)malloc(sizeof(ListaAdjacencia));
+    //memset(nova->vertice, '\0', sizeof(nova->vertice));
     nova->vertice = '0';
     nova->peso = 0;
-    nova->prox = NULL;
+    nova->head = nova->tail = NULL;
     return nova;
 }
 
@@ -54,9 +55,9 @@ char grafoCompleto(char grafo[LINHA][COLUNA], int l, int c)
 
 void verificaSimplesAdjacencia(int m[LINHA][COLUNA], int *simples, int v)
 {
-    //o 'v' -> vertices
-	*simples = 0; //para nao depender de nenhum valor externo, pois pode ocorrer de nunca entrar no if
-	for (int i = 0; i < v; i++)
+    // o 'v' -> vertices
+    *simples = 0; // para nao depender de nenhum valor externo, pois pode ocorrer de nunca entrar no if
+    for (int i = 0; i < v; i++)
         if (m[i][i] != 0)
             *simples = 1;
 }
@@ -102,13 +103,14 @@ int menuPrincipal()
     return opc;
 }
 
-int subMenuAdjacencia(){
+int subMenuAdjacencia()
+{
     int opc;
     printf("*** SUBMENU MATRIZ DE ADJACENCIA ***");
     printf("[1] - Simples\n");
-	printf("[2] - Regular\n");
-	printf("[3] - Completo\n");
-	printf("[10] - SAIR\nOpcao: ");
+    printf("[2] - Regular\n");
+    printf("[3] - Completo\n");
+    printf("[10] - SAIR\nOpcao: ");
     scanf("%d", &opc);
     return opc;
 }
@@ -242,60 +244,69 @@ int main()
     int grafo[LINHA][COLUNA] = {}, vert = 0, opc, opcInterno, simples;
     FILE *ptr = fopen("entrada.txt", "r");
 
-    do{
+    do
+    {
         opc = menuPrincipal();
-        switch(opc){
-            case 1:{
-                //se entrou aqui é porque vou utilizar matriz de adjacencia
-                converteArquivoToMatrizAdj(ptr, grafo, &vert);
-                opcInterno = subMenuAdjacencia();
-                switch(opcInterno){
-                    case 1:{
-                        //tratar se o grafo eh simples
-                        verificaSimplesAdjacencia(grafo,&simples,vert);
-                        if(simples == 1)
-                            printf("Nao eh um grafo simples!!\n");
-                        else
-                            printf("Eh um grafo simples!\n");
-
-                        break;
-                    }
-                    case 2:{
-                        //tratar se o grafo eh regular
-
-                        break;
-                    }
-                    case 3:{
-                        //tratar se o grafo eh completo
-
-                        break;
-                    }
-                    default:{
-                        printf("Digite um valor valido ou '10' para sair!!\n");
-                    }
-                }
+        switch (opc)
+        {
+        case 1:
+        {
+            // se entrou aqui é porque vou utilizar matriz de adjacencia
+            converteArquivoToMatrizAdj(ptr, grafo, &vert);
+            opcInterno = subMenuAdjacencia();
+            switch (opcInterno)
+            {
+            case 1:
+            {
+                // tratar se o grafo eh simples
+                verificaSimplesAdjacencia(grafo, &simples, vert);
+                if (simples == 1)
+                    printf("Nao eh um grafo simples!!\n");
+                else
+                    printf("Eh um grafo simples!\n");
 
                 break;
             }
-            case 2:{
-                
+            case 2:
+            {
+                // tratar se o grafo eh regular
 
                 break;
             }
-            case 3:{
-                
+            case 3:
+            {
+                // tratar se o grafo eh completo
 
                 break;
             }
-            default:{
+            default:
+            {
                 printf("Digite um valor valido ou '10' para sair!!\n");
             }
+            }
+
+            break;
         }
-    }while(opc!=10);
-    
-    //TESTES
-    // converterArquivoToLista(ptr);
-    //converteArquivoToMatrizAdj(ptr, grafo, &vert);
+        case 2:
+        {
+
+            break;
+        }
+        case 3:
+        {
+
+            break;
+        }
+        default:
+        {
+            printf("Digite um valor valido ou '10' para sair!!\n");
+        }
+        }
+    } while (opc != 10);
+
+    // TESTES
+    //  converterArquivoToLista(ptr);
+    // converteArquivoToMatrizAdj(ptr, grafo, &vert);
 
     return 0;
 }

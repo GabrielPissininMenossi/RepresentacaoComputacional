@@ -2,10 +2,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <conio2.h>
+//#include <conio2.h>
 
 #define L 50
 #define C 50
+
+// structs
+typedef struct listaAdjacencia
+{
+    char vertice;
+    int peso;
+    struct listaAdjacencia *head, *tail;
+} ListaAdjacencia;
+
+// pequeno tad da lista adjacencia
+ListaAdjacencia *novaCaixaLista(void)
+{
+    ListaAdjacencia *nova = (ListaAdjacencia *)malloc(sizeof(ListaAdjacencia));
+    //memset(nova->vertice, '\0', sizeof(nova->vertice));
+    nova->vertice = '0';
+    nova->peso = 0;
+    nova->head = nova->tail = NULL;
+    return nova;
+}
+ListaAdjacencia *novaCaixaLista(char vertice)
+{
+    ListaAdjacencia *nova = (ListaAdjacencia *)malloc(sizeof(ListaAdjacencia));
+    //memset(nova->vertice, '\0', sizeof(nova->vertice));
+    nova->vertice = vertice;
+    nova->peso = 0;
+    nova->head = nova->tail = NULL;
+    return nova;
+}
 
 void lerTxTMatrizAdjacencia(int m[L][C], int *qtdeVertices, int *qtdeLinhas, int *qtdeColunas, char vertices[C])
 {
@@ -150,6 +178,65 @@ void lerTxTMatrizIncidencia(int m[L][C], int *qtdeVertices, int *qtdeArestas, in
 	*qtdeLinhas = linhas;
 	fclose(Ptr);
 }
+
+//método para inserir o primeiro
+void inserirLista(ListaAdjacencia**lista, char vertice){
+	ListaAdjacencia * nova = novaCaixaLista(vertice);
+	*lista = nova;
+}
+
+void inserirListaPeso(ListaAdjacencia**lista, char origem, char vertice, int peso){
+	ListaAdjacencia * nova = novaCaixaLista(vertice), *aux, *ant;
+	nova->peso = peso;
+
+	//procurar o vertice de origem
+	aux = ant = *lista;
+	while(aux != NULL && origem != aux->vertice){
+		ant = aux;
+		aux = aux->head;
+	}
+	if(aux == NULL){ //entao nao existe esse vertice origem
+		ant->head = novaCaixaLista(origem);
+		ant->head->tail = novaCaixaLista(vertice);
+		ant->head->tail->peso = peso;
+	}
+	else{
+		//fazer a busca na horizontal
+		ant = aux;
+		while(aux != NULL && vertice != aux->vertice){
+			ant = aux;
+			aux = aux->tail;
+		}
+		if(aux==NULL){
+			ant->tail = novaCaixaLista(vertice);
+			ant->tail->peso = peso;
+		}
+		else{
+			//editar o valor do vertice que ja existe
+			aux->peso = peso;
+		}
+	}
+}
+
+void lerTxtListaAdjacencia(ListaAdjacencia **lista){
+	FILE * ptr = fopen("entradaLA.txt", "r");
+	ListaAdjacencia * caixa;
+	char atual;
+
+	//ate o final do arquivo
+	atual = getc(ptr);
+	while(!feof(ptr)){
+		inserirListaPeso(&(*lista),atual,' ',0);
+		atual = getc(ptr); //pegar o espaco em branco
+		atual = getc(ptr); //pegar o proximo vertice para comecar a tratar
+
+		//ate o final da linha
+		while(!feof(ptr) && atual!='\n'){
+			
+		}
+	}
+}
+
 void verificarOrientadoAdjacencia(int m[L][C], int l, int c,int *grafo)
 {
 	
@@ -470,9 +557,10 @@ char menu (void)
 {
 	printf("\n[A] - Matriz de Adjacencia\n");
 	printf("[B] - Matriz de Incidencia\n");
+	printf("[C] - Lista de Adjacencia\n");
 	printf ("[ESC] - Sair\n");
 	
-	return toupper(getch());
+	return toupper(getchar());
 }
 char submenu(void)
 {
@@ -481,7 +569,7 @@ char submenu(void)
 	printf("[C] - Completo\n");
 	printf ("[ESC] - Voltar\n");
 	
-	return toupper(getch());
+	return toupper(getchar());
 }
 void executar(void)
 {
@@ -494,15 +582,15 @@ void executar(void)
 		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0, qtdeArestas = 0;
 		char vertices[C], arestas[C];
 		arestas[0] = '\0';
-		clrscr();
+		//clrscr();
 		op = menu();
 		switch(op)
 		{
-			case 'A':
+			case 'A':{
 				lerTxTMatrizAdjacencia(m, &qtdeVertices, &qtdeLinhas, &qtdeColunas, vertices);
 				do
 				{
-					clrscr();
+					//clrscr();
 					exibirMatrizAdjacenciaComVertices(m, vertices,qtdeLinhas,qtdeColunas);
 					verificarOrientadoAdjacencia(m, qtdeLinhas, qtdeColunas ,&grafo);
 					if (grafo == 1)
@@ -520,7 +608,7 @@ void executar(void)
 						else
 							printf("\nEh simples");
 							
-						getch();
+						getchar();
 						break;
 						case 'B':
 						verificarRegularAdjacencia(m, qtdeLinhas, qtdeColunas, &regular);
@@ -528,7 +616,7 @@ void executar(void)
 							printf ("\nNao Regular\n");
 						else
 							printf ("\nRegular\n");
-						getch();	
+						getchar();	
 						break;
 						case 'C':
 						if (regular == 0 && simples == 0) // tem q ser regular e simples, para ser completo
@@ -543,17 +631,18 @@ void executar(void)
 							printf ("\nNao eh completo\n");
 						
 					
-						getch();
+						getchar();
 						break;
 						
 					}
 				}while(op2 != 27);
-			break;
-			case 'B':
+				break;
+			}
+			case 'B':{
 				lerTxTMatrizIncidencia(m, &qtdeVertices, &qtdeArestas, &qtdeLinhas, &qtdeColunas, vertices, arestas);
 				do
 				{	
-					clrscr();
+					//clrscr();
 					exibirMatrizIncidenciaComVertices(m, vertices,arestas,qtdeLinhas,qtdeColunas, qtdeArestas);
 					verificarOrientadoIncidencia(m, qtdeLinhas, qtdeColunas ,&grafo);
 					if (grafo == 1)
@@ -578,7 +667,7 @@ void executar(void)
 							printf ("\nNao eh simples\n\nHa laco");
 						else
 							printf("\nEh simples");
-						getch();
+						getchar();
 						break;
 						case 'B':
 						if(grafo == 1)
@@ -592,7 +681,7 @@ void executar(void)
 							printf ("\n\nRegular\n");
 							printf ("Grau: %d\n", grau);
 						}
-						getch();
+						getchar();
 						break;
 						case 'C':
 						if (regular == 0 && simples == 0) // tem q ser regular e simples, para ser completo
@@ -614,17 +703,25 @@ void executar(void)
 						}
 						else
 							printf ("\nNao eh completo\n");
-						getch();
+						getchar();
 						break;
 					}
 				}while(op2 != 27);
-			break;
-		
+				break;
+			}
+			case 'C':{
+
+
+				break;
+			}
+			default:{
+				printf("Opção inválida, digite ESC para SAIR!!\n");
+			}
 		}
 		
 	}while(op != 27);
 	
-	
+
 }
 int main(void)
 {
