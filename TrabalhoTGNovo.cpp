@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-//#include <conio2.h>
+#include <conio2.h>
 
 #define L 50
 #define C 50
@@ -16,7 +16,7 @@ typedef struct listaAdjacencia
 } ListaAdjacencia;
 
 // pequeno tad da lista adjacencia
-ListaAdjacencia *novaCaixaLista(void)
+ListaAdjacencia *novaCaixaVazia(void)
 {
     ListaAdjacencia *nova = (ListaAdjacencia *)malloc(sizeof(ListaAdjacencia));
     //memset(nova->vertice, '\0', sizeof(nova->vertice));
@@ -179,41 +179,42 @@ void lerTxTMatrizIncidencia(int m[L][C], int *qtdeVertices, int *qtdeArestas, in
 	fclose(Ptr);
 }
 
-//método para inserir o primeiro
+//metodo para inserir o primeiro
 void inserirLista(ListaAdjacencia**lista, char vertice){
-	ListaAdjacencia * nova = novaCaixaLista(vertice);
-	*lista = nova;
+	*lista = novaCaixaLista(vertice);
 }
 
 void inserirListaPeso(ListaAdjacencia**lista, char origem, char vertice, int peso){
-	ListaAdjacencia * nova = novaCaixaLista(vertice), *aux, *ant;
-	nova->peso = peso;
+	ListaAdjacencia * nova, *aux, *ant;
 
-	//procurar o vertice de origem
-	aux = ant = *lista;
-	while(aux != NULL && origem != aux->vertice){
-		ant = aux;
-		aux = aux->head;
-	}
-	if(aux == NULL){ //entao nao existe esse vertice origem
-		ant->head = novaCaixaLista(origem);
-		ant->head->tail = novaCaixaLista(vertice);
-		ant->head->tail->peso = peso;
+	//se lista vazia
+	if(*lista == NULL){
+		inserirLista(&(*lista),origem);
 	}
 	else{
-		//fazer a busca na horizontal
-		ant = aux;
-		while(aux != NULL && vertice != aux->vertice){
+		//procurar o vertice origem
+		aux = ant = *lista;
+		while(aux != NULL && origem != aux->vertice){
 			ant = aux;
-			aux = aux->tail;
+			aux = aux->head;
 		}
-		if(aux==NULL){
-			ant->tail = novaCaixaLista(vertice);
-			ant->tail->peso = peso;
+		//se nao existe eu crio o vertice origem
+		if(aux == NULL){ //entao nao existe esse vertice origem
+			ant->head = novaCaixaLista(origem);
 		}
 		else{
-			//editar o valor do vertice que ja existe
-			aux->peso = peso;
+			//fazer a busca na horizontal, buscar o vertice de destino
+			ant = aux;
+			while(aux != NULL && vertice != aux->vertice){
+				ant = aux;
+				aux = aux->tail;
+			}
+			//nao existe o vertice para o destino
+			if(aux == NULL){
+				nova = novaCaixaLista(vertice);
+				nova->peso = peso;
+				ant->tail = nova;
+			}
 		}
 	}
 }
@@ -221,19 +222,163 @@ void inserirListaPeso(ListaAdjacencia**lista, char origem, char vertice, int pes
 void lerTxtListaAdjacencia(ListaAdjacencia **lista){
 	FILE * ptr = fopen("entradaLA.txt", "r");
 	ListaAdjacencia * caixa;
-	char atual;
+	char atual, peso[10], vertice, verLinha;
+	
+	//inicializar o peso
+	memset(peso,'\0',sizeof(peso));
 
-	//ate o final do arquivo
-	atual = getc(ptr);
 	while(!feof(ptr)){
-		inserirListaPeso(&(*lista),atual,' ',0);
+		atual = getc(ptr); //o vertice da linha
+		verLinha = atual; //pegar o vertice do inicio da linha
+		inserirListaPeso(&(*lista),verLinha,' ',0);
 		atual = getc(ptr); //pegar o espaco em branco
 		atual = getc(ptr); //pegar o proximo vertice para comecar a tratar
 
 		//ate o final da linha
 		while(!feof(ptr) && atual!='\n'){
-			
+			if(atual > 47 && atual < 58){
+				//coletar o peso
+				peso[strlen(peso)] = atual;
+			}
+			else{
+				if(atual == ' '){//j� tenho o peso
+					inserirListaPeso(&(*lista),verLinha,vertice,atoi(peso));
+					memset(peso,'\0',sizeof(peso));
+				}
+				else{
+					if(atual != ','){ //quer dizer que eu agora possou o meu vertice
+						vertice = atual;
+					}
+				}
+			}
+			atual = getc(ptr);
 		}
+		inserirListaPeso(&(*lista),verLinha,vertice,atoi(peso));
+		memset(peso,'\0',sizeof(peso));
+	}
+}
+
+void exibirListaAdjacencia(ListaAdjacencia * lista){
+	ListaAdjacencia *auxVert, *auxHori;
+	auxVert = lista;
+	//descer verticalmente
+	while(auxVert != NULL){
+		printf("Vertice: %c | ",auxVert->vertice);
+		auxHori = auxVert->tail;
+		while(auxHori != NULL){
+			printf("%c,%d || ",auxHori->vertice,auxHori->peso);
+			auxHori = auxHori->tail;
+		}
+		printf("\n");
+		auxVert = auxVert->head;
+	}
+}
+
+void verificaSimplesListaAdjacencia(ListaAdjacencia * lista, int *simples){
+	ListaAdjacencia *auxHori;
+	*simples = 0;
+	
+	while(lista != NULL && *simples == 0){ //andar verticalmente
+		//vertice = lista->vertice; //primeiro vertice da minha lista
+		auxHori = lista->tail;
+		while(*simples == 0 && auxHori != NULL){
+			if(auxHori->vertice == lista->vertice)
+				*simples = 1; //o grafo nao eh simples	
+			auxHori = auxHori->tail;
+		}
+		lista = lista->head;
+	}
+}
+
+void verificarRegularListaAdjacencia(ListaAdjacencia * lista, int *regular){
+	ListaAdjacencia * auxHori;
+	*regular = 0;
+	int somaPri = 0, soma;
+	
+	//realizar a soma da primeira fileira
+	auxHori = lista->tail;
+	while(auxHori != NULL){
+		auxHori = auxHori->tail;
+		somaPri++;
+	}
+	
+	//agora realizar a soma das fileiras e comparar com a soma inicial
+	lista = lista->head;
+	while(lista != NULL && *regular==0){ //andar verticalmente
+		auxHori = lista->tail;
+		soma = 0;
+		while(auxHori != NULL){ //andar na horizontal
+			auxHori = auxHori->tail;
+			soma++;
+		}
+		if(soma != somaPri)
+			*regular = 1;
+		lista = lista->head;
+	}
+}
+
+int verificarCompletoListaAdjacencia(ListaAdjacencia * lista, int *completo){
+	ListaAdjacencia *auxHori, *auxVert = lista;
+	int n = 0, k, cont;
+	
+	//andar na horizontal para contar os meus vertices
+	while(auxVert != NULL){
+		n++;
+		auxVert = auxVert->head;
+	}
+	
+	k = n*(n-1);
+	
+	//contar todas as arestas
+	auxVert = lista;
+	cont=0;
+	while(auxVert != NULL){ //andar na vertical
+		auxHori = auxVert->tail;
+		while(auxHori != NULL){ //andar na horizontal
+			cont++;
+			auxHori = auxHori->tail;
+		}
+		auxVert = auxVert->head;
+	}
+	if(cont == k)
+		*completo = 0;
+	else
+		*completo = 1;
+		
+	return n; //quantidade de arestas
+}
+
+char existeOrigemDestinoLista(ListaAdjacencia * lista, char origem, char destino){
+	ListaAdjacencia *auxHori;
+	
+	//achar o vertice de origem
+	while(lista != NULL && lista->vertice != origem)
+		lista = lista->head;
+	if(lista == NULL) //nao existe essa vertice, nao existe essa aresta
+		return 0;
+	else{
+		auxHori = lista->tail;
+		while(auxHori != NULL && auxHori->vertice != destino)
+			auxHori = auxHori->tail;
+		if(auxHori == NULL) //nao existe essa origem
+			return 0;
+	}
+	return 1; //nao entrou em nenhum return falso
+}
+
+void verificarOrientadoListaAdjacencia(ListaAdjacencia *lista, int *grafo){
+	ListaAdjacencia *auxHori;
+	
+	*grafo = 0;
+	while(lista != NULL && *grafo == 0){ //andar na vertical
+		auxHori = lista->tail;
+		while(auxHori != NULL && !*grafo){
+			if(existeOrigemDestinoLista(lista,auxHori->vertice,lista->vertice) == 0){ //nao existe
+				*grafo = 1;
+			}
+			auxHori = auxHori->tail;
+		}
+		lista = lista->head;
 	}
 }
 
@@ -553,23 +698,30 @@ void exibirMatrizIncidenciaComVertices(int m[L][C], char vertices[C], char arest
     }
 }
 
+void continuar(){
+	printf("\n\nPressione qualquer tecla para continuar...");
+	getch();
+}
+
 char menu (void)
 {
+	clrscr();
 	printf("\n[A] - Matriz de Adjacencia\n");
 	printf("[B] - Matriz de Incidencia\n");
 	printf("[C] - Lista de Adjacencia\n");
 	printf ("[ESC] - Sair\n");
 	
-	return toupper(getchar());
+	return toupper(getch());
 }
 char submenu(void)
 {
+	clrscr();
 	printf("\n[A] - Simples\n");
 	printf("[B] - Regular\n");
 	printf("[C] - Completo\n");
 	printf ("[ESC] - Voltar\n");
 	
-	return toupper(getchar());
+	return toupper(getch());
 }
 void executar(void)
 {
@@ -581,8 +733,10 @@ void executar(void)
 		int grafo = 0, simples = 0, regular = 0, regularEmissao = 0, regularRecepcao = 0, completo = 0, laco = 0, multi = 0, grau = 0, n;
 		int m[L][C], qtdeVertices = 0, qtdeLinhas = 0, qtdeColunas = 0, qtdeArestas = 0;
 		char vertices[C], arestas[C];
+		ListaAdjacencia * lista = NULL;
 		arestas[0] = '\0';
 		//clrscr();
+		
 		op = menu();
 		switch(op)
 		{
@@ -710,17 +864,78 @@ void executar(void)
 				break;
 			}
 			case 'C':{
-
+				//lista de adjacencia
+				lerTxtListaAdjacencia(&lista);
+				exibirListaAdjacencia(lista);
+				continuar();
+				
+				//menu
+				do
+				{
+					clrscr();
+					//exibirMatrizAdjacenciaComVertices(m, vertices,qtdeLinhas,qtdeColunas);
+					verificarOrientadoListaAdjacencia(lista,&grafo); //colocar os parametros
+					if (grafo == 1)
+						printf ("\nGrafo Orientado (Digrafo)\n");
+					else
+						printf ("\nGrafo Nao Orientado (Grafo)\n");
+					continuar();
+					op2 = submenu();
+					switch(op2)
+					{
+					
+						//feito, NAO TESTADO
+						case 'A':{
+							verificaSimplesListaAdjacencia(lista,&simples); //colocar os parametros
+							if (simples == 1)
+								printf("\nNao eh simples");
+							else
+								printf("\nEh simples");
+							continuar();
+							break;
+						}
+						
+						//feito, NAO TESTADO
+						case 'B':{
+							verificarRegularListaAdjacencia(lista,&regular); //colocar os parametros
+							if (regular == 1)
+								printf ("\nNao Regular\n");
+							else
+								printf ("\nRegular\n");
+							continuar();
+							break;
+						}
+						
+						case 'C':{
+							//pre requisitos para a verificacao se eh completo ou n
+							verificaSimplesListaAdjacencia(lista,&simples);
+							verificarRegularListaAdjacencia(lista,&regular);
+							
+							if (regular == 0 && simples == 0) // tem q ser regular e simples, para ser completo
+							{
+								verificarCompletoListaAdjacencia(lista,&grafo);//colocar os parametros
+								if (completo == 1) // nao eh completo
+									printf ("\nNao eh completo\n");
+								else
+									printf ("\nCompleto\n");
+							}
+							else
+								printf ("\nNao eh completo\n");
+							continuar();
+							break;
+						}
+						
+					}
+				} while(op2 != 27);
 
 				break;
 			}
 			default:{
-				printf("Opção inválida, digite ESC para SAIR!!\n");
+				printf("Opcao Invalida, digite ESC para SAIR!!\n");
 			}
 		}
 		
 	}while(op != 27);
-	
 
 }
 int main(void)
